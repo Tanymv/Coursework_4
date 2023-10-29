@@ -130,10 +130,6 @@ class Work_files_hh(Work_files):
             print(i)
 
 
-work_files_hh = Work_files_hh()
-work_files_hh.add_file()
-
-
 class Work_files_superjob(Work_files):
     """класс для добавления вакансий в файл, получения данных из файла по указанным критериям с  superjob.ru"""
 
@@ -179,19 +175,17 @@ class Work_files_superjob(Work_files):
                               k["snippet"]["requirement"]])
 
         result = sorted(areas, reverse=True, key=lambda item: item[1])
+        print("")
         print("Вакансии с Superjob.ru")
         for i in result:
             print(i)
-
-
-work_files_superjob = Work_files_superjob()
-work_files_superjob.add_file()
 
 
 class Clearing_files:
     """
     Класс очищает json файлы.
     """
+
     def __init__(self, filename):
         self.filename = filename
 
@@ -204,3 +198,25 @@ clearing_files1 = Clearing_files("hh.json")
 clearing_files2 = Clearing_files("super.json")
 clearing_files1.clear()
 clearing_files2.clear()
+
+
+def user_interaction():
+    input("Введите слово для запроса: ")
+    conclusion = int(input("Введите 1 - HeadHunter, 2 - SuperJob, 3 - Вместе: "))
+    if conclusion == 1:
+        work_files_hh = Work_files_hh()
+        work_files_hh.add_file()
+    elif conclusion == 2:
+        work_files_superjob = Work_files_superjob()
+        work_files_superjob.add_file()
+    elif conclusion == 3:
+        work_files_hh = Work_files_hh()
+        work_files_hh.add_file()
+        work_files_superjob = Work_files_superjob()
+        work_files_superjob.add_file()
+    else:
+        print("Вы ввели не то")
+
+
+if __name__ == "__main__":
+    user_interaction()
