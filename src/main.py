@@ -21,7 +21,7 @@ class Hh_site(Api_sites):
             'text': 'python',
         }
         req = requests.get('https://api.hh.ru/vacancies', params=params)
-        data = req.content.decode()  # Декодируем его ответ, чтобы Кириллица отображалась корректно
+        data = req.content.decode()
         req.close()
         return data
 
@@ -43,7 +43,7 @@ class Superjob_site(Api_sites):
                             ".11211fc0eb5b45066dbaf0fe6cefa4a84f6e847a"
         }
         req = requests.get('https://api.hh.ru/vacancies', params=params, headers=header)
-        data = req.content.decode()  # Декодируем его ответ, чтобы Кириллица отображалась корректно
+        data = req.content.decode()
         req.close()
         return data
 
@@ -93,16 +93,15 @@ class Work_files_hh(Work_files):
             f.write(json.dumps(js_obj1, ensure_ascii=False, indent=2))
             f.close()
 
-            # Проверка на последнюю страницу, если вакансий меньше 2000
             if (js_obj1['pages'] - page) <= 1:
                 break
 
-            # Необязательная задержка, но чтобы не нагружать сервисы hh, оставим. 5 сек мы может подождать
             time.sleep(0.25)
+
         f = open('hh.json', encoding='utf8')
         jsonText = f.read()
         f.close()
-        # Текст файла переводим в справочник
+
         json_obj = json.loads(jsonText)
         areas = []
         obj = json_obj['items']
@@ -126,6 +125,7 @@ class Work_files_hh(Work_files):
 
         result = sorted(areas, reverse=True, key=lambda item: item[1])
         print("Вакансии с Hh.ru")
+
         for i in result:
             print(i)
 
@@ -152,7 +152,7 @@ class Work_files_superjob(Work_files):
         f = open('super.json', encoding='utf8')
         jsonText = f.read()
         f.close()
-        # Текст файла переводим в справочник
+
         json_obj = json.loads(jsonText)
         areas = []
         obj = json_obj['items']
@@ -177,6 +177,7 @@ class Work_files_superjob(Work_files):
         result = sorted(areas, reverse=True, key=lambda item: item[1])
         print("")
         print("Вакансии с Superjob.ru")
+
         for i in result:
             print(i)
 
