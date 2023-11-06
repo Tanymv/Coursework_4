@@ -15,7 +15,7 @@ class Api_sites:
 class Hh_site(Api_sites):
     """Класс подключается к API и получает вакансии с hh.ru."""
 
-    @abstractmethod
+    @property
     def get_vacancies(self):
         params = {
             'text': 'python',
@@ -23,17 +23,22 @@ class Hh_site(Api_sites):
         req = requests.get('https://api.hh.ru/vacancies', params=params)
         data = req.content.decode()
         req.close()
+        url = 'https://api.hh.ru/vacancies'
+        try:
+            r = requests.get(url, timeout=1)
+            r.raise_for_status()
+        except requests.exceptions.RequestException as errex:
+            print("Exception request")
         return data
 
 
 hh_site = Hh_site()
-hh = hh_site.get_vacancies()
+hh = hh_site.get_vacancies
 
 
 class Superjob_site(Api_sites):
     """Класс подключается к API и получает вакансии с  superjob.ru"""
 
-    @abstractmethod
     def get_vacancies(self):
         params = {
             'text': 'python',
@@ -45,6 +50,12 @@ class Superjob_site(Api_sites):
         req = requests.get('https://api.hh.ru/vacancies', params=params, headers=header)
         data = req.content.decode()
         req.close()
+        url = 'https://api.hh.ru/vacancies'
+        try:
+            r = requests.get(url, timeout=1)
+            r.raise_for_status()
+        except requests.exceptions.RequestException as errex:
+            print("Exception request")
         return data
 
 
@@ -52,7 +63,7 @@ superjob_site = Superjob_site()
 super_ = superjob_site.get_vacancies()
 
 
-class Job_processing:
+class Vacancy:
     """Класс поддерживает методы сравнения вакансий между собой по зарплате и валидирует данные,
     которыми инициализируются его атрибуты."""
 
@@ -81,7 +92,6 @@ class Work_files:
 class Work_files_hh(Work_files):
     """класс для добавления вакансий в файл, получения данных из файла по указанным критериям с hh.ru."""
 
-    @abstractmethod
     def add_file(self):
         for page in range(0, 20):
 
@@ -133,7 +143,6 @@ class Work_files_hh(Work_files):
 class Work_files_superjob(Work_files):
     """класс для добавления вакансий в файл, получения данных из файла по указанным критериям с  superjob.ru"""
 
-    @abstractmethod
     def add_file(self):
         for page in range(0, 20):
 
