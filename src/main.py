@@ -1,10 +1,17 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 import requests  # Для запросов по API
 import json  # Для обработки полученных результатов
 import time  # Для задержки между запросами
 
 
-class Api_sites:
+class FileSaver:
+    @staticmethod
+    def save_to_file(data, filename, mode):
+        with open(filename, mode=mode, encoding='utf8') as f:
+            f.write(json.dumps(data, ensure_ascii=False, indent=2))
+
+
+class ApiSites(ABC):
     """абстрактный класс для работы с API сайтов с вакансиями."""
 
     @abstractmethod
@@ -12,7 +19,7 @@ class Api_sites:
         pass
 
 
-class Hh_site(Api_sites):
+class HhSite(ApiSites):
     """Класс подключается к API и получает вакансии с hh.ru."""
 
     @property
@@ -22,7 +29,6 @@ class Hh_site(Api_sites):
         }
         req = requests.get('https://api.hh.ru/vacancies', params=params)
         data = req.content.decode()
-        req.close()
         url = 'https://api.hh.ru/vacancies'
         try:
             r = requests.get(url, timeout=1)
@@ -32,11 +38,11 @@ class Hh_site(Api_sites):
         return data
 
 
-hh_site = Hh_site()
+hh_site = HhSite()
 hh = hh_site.get_vacancies
 
 
-class Superjob_site(Api_sites):
+class SuperjobSite(ApiSites):
     """Класс подключается к API и получает вакансии с  superjob.ru"""
 
     def get_vacancies(self):
@@ -49,7 +55,6 @@ class Superjob_site(Api_sites):
         }
         req = requests.get('https://api.hh.ru/vacancies', params=params, headers=header)
         data = req.content.decode()
-        req.close()
         url = 'https://api.hh.ru/vacancies'
         try:
             r = requests.get(url, timeout=1)
@@ -59,7 +64,7 @@ class Superjob_site(Api_sites):
         return data
 
 
-superjob_site = Superjob_site()
+superjob_site = SuperjobSite()
 super_ = superjob_site.get_vacancies()
 
 
@@ -80,7 +85,7 @@ class Vacancy:
         return self.salary < other.salary
 
 
-class Work_files:
+class WorkFiles(ABC):
     """абстрактный класс для добавления вакансий в файл, получения данных из файла по указанным критериям и удаления
     информации о вакансиях."""
 
@@ -89,109 +94,155 @@ class Work_files:
         pass
 
 
-class Work_files_hh(Work_files):
+class WorkFilesHh(WorkFiles):
     """класс для добавления вакансий в файл, получения данных из файла по указанным критериям с hh.ru."""
 
     def add_file(self):
+        file_saver = FileSaver()
+
         for page in range(0, 20):
-
             js_obj1 = json.loads(hh)
-
             next_file_name1 = 'hh.json'
+            file_saver.save_to_file(js_obj1, next_file_name1, mode='a')
+            areas = []
+            obj = js_obj1['items']
 
-            f = open(next_file_name1, mode='w', encoding='utf8')
-            f.write(json.dumps(js_obj1, ensure_ascii=False, indent=2))
-            f.close()
+            for k in obj:
+                try:
+                    areas.append([k['name'],
+                                  str(k["salary"]["from"]),
+                                  k["alternate_url"],
+                                  k["snippet"]["requirement"]])
+                except TypeError:
+                    areas.append([k['name'],
+                                  "Данных нет",
+                                  k["alternate_url"],
+                                  k["snippet"]["requirement"]])
+                else:
+                    areas.append([k['name'],
+                                  str(k["salary"]["from"]),
+                                  k["alternate_url"],
+                                  k["snippet"]["requirement"]])
 
-            if (js_obj1['pages'] - page) <= 1:
-                break
+            result = sorted(areas, reverse=True, key=lambda item: item[1])
+            print("Вакансии с Hh.ru")
 
-            time.sleep(0.25)
+            for i in result:
+                print(i)
+            break
+    def top(self):
+        file_saver = FileSaver()
 
-        f = open('hh.json', encoding='utf8')
-        jsonText = f.read()
-        f.close()
+        for page in range(0, 20):
+            js_obj1 = json.loads(hh)
+            next_file_name1 = 'hh.json'
+            file_saver.save_to_file(js_obj1, next_file_name1, mode='a')
+            areas = []
+            obj = js_obj1['items']
 
-        json_obj = json.loads(jsonText)
-        areas = []
-        obj = json_obj['items']
+            for k in obj:
+                try:
+                    areas.append([k['name'],
+                                  str(k["salary"]["from"]),
+                                  k["alternate_url"],
+                                  k["snippet"]["requirement"]])
+                except TypeError:
+                    areas.append([k['name'],
+                                  "Данных нет",
+                                  k["alternate_url"],
+                                  k["snippet"]["requirement"]])
+                else:
+                    areas.append([k['name'],
+                                  str(k["salary"]["from"]),
+                                  k["alternate_url"],
+                                  k["snippet"]["requirement"]])
 
-        for k in obj:
-            try:
-                areas.append([k['name'],
-                              str(k["salary"]["from"]),
-                              k["alternate_url"],
-                              k["snippet"]["requirement"]])
-            except TypeError:
-                areas.append([k['name'],
-                              "Данных нет",
-                              k["alternate_url"],
-                              k["snippet"]["requirement"]])
-            else:
-                areas.append([k['name'],
-                              str(k["salary"]["from"]),
-                              k["alternate_url"],
-                              k["snippet"]["requirement"]])
+            result = sorted(areas, reverse=True, key=lambda item: item[1])
+            result = result[-5:]
+            print("Вакансии с Hh.ru")
 
-        result = sorted(areas, reverse=True, key=lambda item: item[1])
-        print("Вакансии с Hh.ru")
-
-        for i in result:
-            print(i)
+            for i in result:
+                print(i)
+            break
 
 
-class Work_files_superjob(Work_files):
+class WorkFilesSuperjob(WorkFiles):
     """класс для добавления вакансий в файл, получения данных из файла по указанным критериям с  superjob.ru"""
 
     def add_file(self):
+        file_saver1 = FileSaver()
+
         for page in range(0, 20):
+            js_obj2 = json.loads(hh)
+            next_file_name2 = 'hh.json'
+            file_saver1.save_to_file(js_obj2, next_file_name2, mode='a')
 
-            js_obj2 = json.loads(super_)
+            areas = []
+            obj = js_obj2['items']
 
-            next_file_name2 = 'super.json'
+            for k in obj:
+                try:
+                    areas.append([k['name'],
+                                  str(k["salary"]["from"]),
+                                  k["alternate_url"],
+                                  k["snippet"]["requirement"]])
+                except TypeError:
+                    areas.append([k['name'],
+                                  "Данных нет",
+                                  k["alternate_url"],
+                                  k["snippet"]["requirement"]])
+                else:
+                    areas.append([k['name'],
+                                  str(k["salary"]["from"]),
+                                  k["alternate_url"],
+                                  k["snippet"]["requirement"]])
 
-            f = open(next_file_name2, mode='w', encoding='utf8')
-            f.write(json.dumps(js_obj2, ensure_ascii=False, indent=2))
-            f.close()
+            result = sorted(areas, reverse=True, key=lambda item: item[1])
+            print("")
+            print("Вакансии с Superjob.ru")
 
-            if (js_obj2['pages'] - page) <= 1:
-                break
+            for i in result:
+                print(i)
+            break
+    def top(self):
+        file_saver = FileSaver()
 
-            time.sleep(0.25)
-        f = open('super.json', encoding='utf8')
-        jsonText = f.read()
-        f.close()
+        for page in range(0, 20):
+            js_obj2 = json.loads(hh)
+            next_file_name2 = 'hh.json'
+            file_saver.save_to_file(js_obj2, next_file_name2, mode='a')
 
-        json_obj = json.loads(jsonText)
-        areas = []
-        obj = json_obj['items']
+            areas = []
+            obj = js_obj2['items']
 
-        for k in obj:
-            try:
-                areas.append([k['name'],
-                              str(k["salary"]["from"]),
-                              k["alternate_url"],
-                              k["snippet"]["requirement"]])
-            except TypeError:
-                areas.append([k['name'],
-                              "Данных нет",
-                              k["alternate_url"],
-                              k["snippet"]["requirement"]])
-            else:
-                areas.append([k['name'],
-                              str(k["salary"]["from"]),
-                              k["alternate_url"],
-                              k["snippet"]["requirement"]])
+            for k in obj:
+                try:
+                    areas.append([k['name'],
+                                  str(k["salary"]["from"]),
+                                  k["alternate_url"],
+                                  k["snippet"]["requirement"]])
+                except TypeError:
+                    areas.append([k['name'],
+                                  "Данных нет",
+                                  k["alternate_url"],
+                                  k["snippet"]["requirement"]])
+                else:
+                    areas.append([k['name'],
+                                  str(k["salary"]["from"]),
+                                  k["alternate_url"],
+                                  k["snippet"]["requirement"]])
 
-        result = sorted(areas, reverse=True, key=lambda item: item[1])
-        print("")
-        print("Вакансии с Superjob.ru")
+            result = sorted(areas, reverse=True, key=lambda item: item[1])
+            print("")
+            print("Вакансии с Superjob.ru")
+            result = result[-5:]
 
-        for i in result:
-            print(i)
+            for i in result:
+                print(i)
+            break
 
 
-class Clearing_files:
+class ClearingFiles:
     """
     Класс очищает json файлы.
     """
@@ -204,8 +255,8 @@ class Clearing_files:
             file.truncate()
 
 
-clearing_files1 = Clearing_files("hh.json")
-clearing_files2 = Clearing_files("super.json")
+clearing_files1 = ClearingFiles("hh.json")
+clearing_files2 = ClearingFiles("super.json")
 clearing_files1.clear()
 clearing_files2.clear()
 
@@ -214,16 +265,32 @@ def user_interaction():
     input("Введите слово для запроса: ")
     conclusion = int(input("Введите 1 - HeadHunter, 2 - SuperJob, 3 - Вместе: "))
     if conclusion == 1:
-        work_files_hh = Work_files_hh()
+        work_files_hh = WorkFilesHh()
         work_files_hh.add_file()
+        user_input = int(input("Хотите вывести топ 5? 1 - да, 2 - нет. "))
+        if user_input == 1:
+            work_files_hh.top()
+        elif user_input == 2:
+            print("До встречи")
     elif conclusion == 2:
-        work_files_superjob = Work_files_superjob()
+        work_files_superjob = WorkFilesSuperjob()
         work_files_superjob.add_file()
+        user_input = int(input("Хотите вывести топ 5? 1 - да, 2 - нет. "))
+        if user_input == 1:
+            work_files_superjob.top()
+        elif user_input == 2:
+            print("До встречи")
     elif conclusion == 3:
-        work_files_hh = Work_files_hh()
+        work_files_hh = WorkFilesHh()
         work_files_hh.add_file()
-        work_files_superjob = Work_files_superjob()
+        work_files_superjob = WorkFilesSuperjob()
         work_files_superjob.add_file()
+        user_input = int(input("Хотите вывести топ 5? 1 - да, 2 - нет. "))
+        if user_input == 1:
+            work_files_hh.top()
+            work_files_superjob.top()
+        elif user_input == 2:
+            print("До встречи")
     else:
         print("Вы ввели не то")
 
